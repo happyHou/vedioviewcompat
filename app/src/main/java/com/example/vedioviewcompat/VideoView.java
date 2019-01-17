@@ -101,6 +101,8 @@ public class VideoView extends SurfaceView implements MediaPlayerControl {
     private boolean     mCanSeekBack;
     private boolean     mCanSeekForward;
 
+    private boolean fullScreenFlag;
+
     public VideoView(Context context) {
         super(context);
         initVideoView();
@@ -553,6 +555,7 @@ public class VideoView extends SurfaceView implements MediaPlayerControl {
 	@Override
     public boolean onKeyDown(int keyCode, KeyEvent event)
     {
+        Log.e(TAG, "onKeyDown: "+"hihihih" );
         boolean isKeyCodeSupported = keyCode != KeyEvent.KEYCODE_BACK &&
                                      keyCode != KeyEvent.KEYCODE_VOLUME_UP &&
                                      keyCode != KeyEvent.KEYCODE_VOLUME_DOWN &&
@@ -675,6 +678,7 @@ public class VideoView extends SurfaceView implements MediaPlayerControl {
                 mCurrentState != STATE_PREPARING);
     }
 
+
     @Override
     public boolean canPause() {
         return mCanPause;
@@ -692,12 +696,17 @@ public class VideoView extends SurfaceView implements MediaPlayerControl {
 
     @Override
     public boolean isFullScreen() {
-        return false;
+        return fullScreenFlag;
     }
 
-    @Override
-    public void toggleFullScreen() {
+    public void setFullScreen(){
+        fullScreenFlag=true;
+        mMediaController.updateFullScreen();
+    }
 
+    public void  exitFullScreen(){
+        fullScreenFlag=false;
+        mMediaController.updateFullScreen();
     }
 
     @Override

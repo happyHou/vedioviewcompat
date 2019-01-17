@@ -13,11 +13,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
@@ -28,9 +30,9 @@ import java.util.HashMap;
 
 
 public class MainActivity extends Activity implements onClickIsFullScreenListener {
+    private static final String TAG = "MainActivity";
 
     private MediaController mController;
-    private boolean fullscreen = false;
     private VideoView viv;
     private ProgressBar progressBar;
     private RelativeLayout rlDD;
@@ -57,36 +59,29 @@ public class MainActivity extends Activity implements onClickIsFullScreenListene
         viv.setVideoURI(Uri.parse(url));
         viv.requestFocus();
         viv.start();
-        vvv(url);
     }
 
 
-    private void vvv(String url) {
-        Bitmap bitmap=null;
-        try {
-             bitmap = retriveVideoFrameFromVideo(url);
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-        }
+//    private void vvv(String url) {
+//        Bitmap bitmap=null;
+//        try {
+//             bitmap = retriveVideoFrameFromVideo(url);
+//        } catch (Throwable throwable) {
+//            throwable.printStackTrace();
+//        }
+//
+//        if (bitmap!=null) {
+//            viv.setBackgroundDrawable(new BitmapDrawable(bitmap));
+//
+//        }
+//
+//    }
 
-        if (bitmap!=null) {
-            viv.setBackgroundDrawable(new BitmapDrawable(bitmap));
-
-        }
-
-    }
-
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        // TODO Auto-generated method stub
-        return super.onTouchEvent(event);
-    }
 
     @Override
     public void setOnClickIsFullScreen() {
         // TODO Auto-generated method stub
-        if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {//…Ë÷√RelativeLayoutµƒ»´∆¡ƒ£ Ω
+        if (this.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {//ËÆæÁΩÆRelativeLayoutÁöÑÂÖ®Â±èÊ®°Âºè
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -95,20 +90,21 @@ public class MainActivity extends Activity implements onClickIsFullScreenListene
 
     public void onConfigurationChanged(Configuration newConfig) {
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Log.e("info", "∫·∆¡");
-//			rlDD.setVisibility(View.GONE);
+            Log.e("info", "Ê®™Â±è");
             rlTop.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            viv.setFullScreen();
+            enterFullScreen();
         } else {
-            Log.e("info", " ˙∆¡");
-//			rlDD.setVisibility(View.VISIBLE);
-//			rlTop.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            Log.e("info", "Á´ñÂ±è");
             rlTop.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ScreenDensityUtil.dip2px(this, 210)));
-
+            viv.exitFullScreen();
+            exitFullScreen();
         }
         super.onConfigurationChanged(newConfig);
         viv.refreshDrawableState();
 
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -117,11 +113,42 @@ public class MainActivity extends Activity implements onClickIsFullScreenListene
         return true;
     }
 
+    public void enterFullScreen() {
+        //todo api<16 Êú™ÊµãËØï
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent keyCode) {
+           Log.e(TAG, "onKeyDown: " + keyCode.getKeyCode());
+        if (keyCode.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            int orientation = getRequestedOrientation();
+            if (orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+                //Ê®™Â±è
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                return true;
+            } else {
+                finish();
+                return true;
+
+            }
+        }
+        return super.dispatchKeyEvent(keyCode);
+    }
+
+    public void exitFullScreen() {
+        //todo api<16 Êú™ÊµãËØï
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN, WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+
+    }
+
     /**
-     *  ”∆µurlÀı¬‘Õº
-     * @param videoPath Õ¯¬Áµÿ÷∑
-     * @return
-     * @throws Throwable
+     * ËßÜÈ¢ëurlÁº©Áï•Âõæ
+     *
+     * @param videoPath ÁΩëÁªúÂú∞ÂùÄ
      */
     public static Bitmap retriveVideoFrameFromVideo(String videoPath)
             throws Throwable {

@@ -106,6 +106,7 @@ public class MediaController extends FrameLayout {
     private ImageButton         mRewButton;
     private ImageButton         mNextButton;
     private ImageButton         mPrevButton;
+    private ImageButton mIsFullScreen;
 
     public MediaController(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -136,7 +137,7 @@ public class MediaController extends FrameLayout {
 
 	private void initFloatingWindow() {
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
-        //ÕâÀïµÃ×¢ÒâÏÂ£¬Ê¹ÓÃPolicyCompatÌæ»»Ô­À´µÄ
+        //è¿™é‡Œå¾—æ³¨æ„ä¸‹ï¼Œä½¿ç”¨PolicyCompatæ›¿æ¢åŸæ¥çš„
         mWindow = PolicyCompat.createWindow(mContext);
         mWindow.setWindowManager(mWindowManager, null, null);
         mWindow.requestFeature(Window.FEATURE_NO_TITLE);
@@ -216,8 +217,7 @@ public class MediaController extends FrameLayout {
             return false;
         }
     };
-	private ImageButton mIsFullScreen;
-    
+
     public void setMediaPlayer(MediaPlayerControl player) {
         mPlayer = player;
         updatePausePlay();
@@ -248,9 +248,9 @@ public class MediaController extends FrameLayout {
         );
 
         removeAllViews();
-        //ÔÚÕâÀï¸ü¸Äµ×²¿²¼¾Ö£¬ÒÔ¼°»ñÈ¡ÏàÓ¦¿Ø¼ş¶ÔÏó£¬½øĞĞ²Ù×÷£¬
-        //½¨ÒéÔ­²¼¾ÖÖĞ¿Ø¼şÀàĞÍºÍÃû×Ö²»Òª¸Ä£¬ÃâµÃÔÚÕâÀïÓÖµÃĞŞ¸Ä£¬±£Ö¤Ô­¹¦ÄÜÍêÕû
-        //ĞèÒªÌí¼ÓµÄ¿Ø¼ş£¬Ìí¼Óºó×öÏàÓ¦´¦Àí
+        //åœ¨è¿™é‡Œæ›´æ”¹åº•éƒ¨å¸ƒå±€ï¼Œä»¥åŠè·å–ç›¸åº”æ§ä»¶å¯¹è±¡ï¼Œè¿›è¡Œæ“ä½œï¼Œ
+        //å»ºè®®åŸå¸ƒå±€ä¸­æ§ä»¶ç±»å‹å’Œåå­—ä¸è¦æ”¹ï¼Œå…å¾—åœ¨è¿™é‡Œåˆå¾—ä¿®æ”¹ï¼Œä¿è¯åŸåŠŸèƒ½å®Œæ•´
+        //éœ€è¦æ·»åŠ çš„æ§ä»¶ï¼Œæ·»åŠ ååšç›¸åº”å¤„ç†
         mRoot = makeControllerView();
         initControllerView(mRoot);
         addView(mRoot, frameParams);
@@ -263,7 +263,7 @@ public class MediaController extends FrameLayout {
      * @hide This doesn't work as advertised
      */
     protected View makeControllerView() {
-    	//MediaControllerd ²¼¾Ö
+    	//MediaControllerd å¸ƒå±€
         LayoutInflater inflate = LayoutInflater.from(getContext());
         return inflate.inflate(R.layout.media_controller, null);
     }
@@ -314,7 +314,7 @@ public class MediaController extends FrameLayout {
         mCurrentTime = (TextView) v.findViewById(R.id.time_current);
         mFormatBuilder = new StringBuilder();
         mFormatter = new Formatter(mFormatBuilder, Locale.getDefault());
-        //¶ÔÈ«ÆÁ°ëÆÁÇĞ»»½øĞĞ²Ù×÷
+        //å¯¹å…¨å±åŠå±åˆ‡æ¢è¿›è¡Œæ“ä½œ
         mIsFullScreen = (ImageButton) v.findViewById(R.id.is_full_screen);
         mIsFullScreen.setOnClickListener(new OnClickListener() {
 			
@@ -322,14 +322,14 @@ public class MediaController extends FrameLayout {
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
 				clickIsFullScreenListener.setOnClickIsFullScreen();
-				
+
 			}
 		});
 
         installPrevNextListeners();
     }
 
-    //È«ÆÁ°ëÆÁÇĞ»»½Ó¿Ú
+    //å…¨å±åŠå±åˆ‡æ¢æ¥å£
     public interface onClickIsFullScreenListener{
     	public void setOnClickIsFullScreen();
     }
@@ -504,8 +504,24 @@ public class MediaController extends FrameLayout {
         return false;
     }
 
+   public void updateFullScreen() {
+        if (mRoot == null || mIsFullScreen == null || mPlayer == null) {
+            return;
+        }
+
+        if (mPlayer.isFullScreen()) {
+            mIsFullScreen.setImageResource(R.drawable.ic_media_fullscreen_shrink);
+        }
+        else {
+            mIsFullScreen.setImageResource(R.drawable.ic_media_fullscreen_stretch);
+        }
+    }
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (mPlayer == null) {
+            return true;
+        }
+
         int keyCode = event.getKeyCode();
         final boolean uniqueDown = event.getRepeatCount() == 0
                 && event.getAction() == KeyEvent.ACTION_DOWN;
@@ -737,7 +753,6 @@ public class MediaController extends FrameLayout {
         boolean canSeekBackward();
         boolean canSeekForward();
         boolean isFullScreen();
-        void    toggleFullScreen();
         /**
          * Get the audio session id for the player used by this VideoView. This can be used to
          * apply audio effects to the audio track of a video.
