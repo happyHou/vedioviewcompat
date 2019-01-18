@@ -4,32 +4,29 @@ import android.app.Activity;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaMetadataRetriever;
-import android.media.ThumbnailUtils;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
-import com.example.vedioviewcompat.MediaController.MediaPlayerControl;
 import com.example.vedioviewcompat.MediaController.onClickIsFullScreenListener;
 
 import java.util.HashMap;
 
 
-public class MainActivity extends Activity implements onClickIsFullScreenListener {
+public class MainActivity extends Activity implements onClickIsFullScreenListener, MediaPlayer.OnPreparedListener, View.OnClickListener, MediaPlayer.OnInfoListener {
     private static final String TAG = "MainActivity";
 
     private MediaController mController;
@@ -37,15 +34,16 @@ public class MainActivity extends Activity implements onClickIsFullScreenListene
     private ProgressBar progressBar;
     private RelativeLayout rlDD;
     private RelativeLayout rlTop;
+    private ImageView preView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-
         setContentView(R.layout.activity_main);
         viv = (VideoView) findViewById(R.id.videoView);
         rlDD = (RelativeLayout) findViewById(R.id.rl_dd);
+        preView=(ImageView)findViewById(R.id.preview);
         rlTop = (RelativeLayout) findViewById(R.id.toprl);
 //		progressBar=(ProgressBar) findViewById(R.id.progressBar1);
         mController = new MediaController(this);
@@ -58,24 +56,26 @@ public class MainActivity extends Activity implements onClickIsFullScreenListene
         String url = "https://file.bte.top/goods/video/201812067449944082.mp4";
         viv.setVideoURI(Uri.parse(url));
         viv.requestFocus();
-        viv.start();
+        viv.setOnPreparedListener(this);
+        viv.setOnInfoListener(this);
+        setBackGround(url);
     }
 
 
-//    private void vvv(String url) {
-//        Bitmap bitmap=null;
-//        try {
-//             bitmap = retriveVideoFrameFromVideo(url);
-//        } catch (Throwable throwable) {
-//            throwable.printStackTrace();
-//        }
-//
-//        if (bitmap!=null) {
-//            viv.setBackgroundDrawable(new BitmapDrawable(bitmap));
-//
-//        }
-//
-//    }
+    private void setBackGround(String url) {
+        Bitmap bitmap=null;
+        try {
+             bitmap = retriveVideoFrameFromVideo(url);
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+
+        if (bitmap!=null) {
+            preView.setBackgroundDrawable(new BitmapDrawable(getResources(),bitmap));
+
+        }
+
+    }
 
 
     @Override
@@ -123,7 +123,7 @@ public class MainActivity extends Activity implements onClickIsFullScreenListene
     @Override
     public boolean dispatchKeyEvent(KeyEvent keyCode) {
            Log.e(TAG, "onKeyDown: " + keyCode.getKeyCode());
-        if (keyCode.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+        if (keyCode.getKeyCode() == KeyEvent.KEYCODE_BACK && keyCode.getAction()==KeyEvent.ACTION_UP) {
             int orientation = getRequestedOrientation();
             if (orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
                 //横屏
@@ -174,5 +174,39 @@ public class MainActivity extends Activity implements onClickIsFullScreenListene
             }
         }
         return bitmap;
+    }
+
+    @Override
+    public void onPrepared(MediaPlayer mediaPlayer) {
+
+        Log.e(TAG, "onPrepared: " );
+    }
+
+    @Override
+    public void onClick(View view) {
+//        switch (view.getId()) {
+//            case R.id.player:
+//                if (viv.isPlaying()) {
+//                    player.setText("暂停");
+//                    viv.pause();
+//                }else {
+//                    viv.start();
+//                    player.setVisibility(View.GONE);
+//                }
+//                break;
+//        }
+    }
+
+    @Override
+    public boolean onInfo(MediaPlayer mediaPlayer, int what, int extra) {
+        Log.e(TAG, "onInfo: " );
+        if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+            // Here the video starts
+            Log.e(TAG, "onInfo: "+ "开始播放");
+            preView.setVisibility(View.GONE);
+            return true;
+        }
+
+        return false;
     }
 }
